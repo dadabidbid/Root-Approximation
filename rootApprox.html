@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Root Finder</title>
+</head>
+<body>
+  <h2>Root Finder</h2>
+
+  <label>Enter a function in terms of x (e.g., <code>x**3 - x - 2</code>):</label><br>
+  <input type="text" id="func" size="40" value="x**3 - x - 2"><br><br>
+
+  <label>Choose a method:</label><br>
+  <select id="method">
+    <option value="bisection">Bisection Method</option>
+    <option value="newton">Newton-Raphson Method</option>
+    <option value="secant">Secant Method</option>
+  </select><br><br>
+
+  <div id="bisection-inputs">
+    <strong>Bisection Method Inputs:</strong><br>
+    Lower bound (a): <input id="a" type="number" step="any"><br>
+    Upper bound (b): <input id="b" type="number" step="any"><br><br>
+  </div>
+
+  <div id="newton-inputs">
+    <strong>Newton-Raphson Method Input:</strong><br>
+    Initial guess (x0): <input id="x0_newton" type="number" step="any"><br><br>
+  </div>
+
+  <div id="secant-inputs">
+    <strong>Secant Method Inputs:</strong><br>
+    First guess (x0): <input id="x0_secant" type="number" step="any"><br>
+    Second guess (x1): <input id="x1_secant" type="number" step="any"><br><br>
+  </div>
+
+  <button onclick="solve()">Compute Root</button>
+
+  <h3>Output:</h3>
+  <pre id="output" style="background:#f4f4f4; padding:10px; border:1px solid #ccc;"></pre>
+
+  <script>
+    function F(expr, x) {
+      try {
+        return eval(expr);
+      } catch {
+        return NaN;
+      }
+    }
+
+    function solve() {
+      const func = document.getElementById("func").value;
+      const method = document.getElementById("method").value;
+      const output = document.getElementById("output");
+      output.textContent = "";
+
+      const tol = 1e-6;
+      let steps = "";
+      let result;
+
+      if (method === "bisection") {
+        const a = parseFloat(document.getElementById("a").value);
+        const b = parseFloat(document.getElementById("b").value);
+        if (F(func, a) * F(func, b) >= 0) {
+          output.textContent = "Bisection method failed: f(a) and f(b) must have opposite signs.";
+          return;
+        }
+        let a_ = a, b_ = b;
+        let iter = 0;
+        while ((b_ - a_) / 2 > tol) {
+          let c = (a_ + b_) / 2;
+          let fc = F(func, c);
+          steps += `Iteration ${++iter}: a = ${a_}, b = ${b_}, c = ${c}, f(c) = ${fc}\n`;
+          if (fc === 0) break;
+          if (F(func, a_) * fc < 0) b_ = c;
+          else a_ = c;
+        }
+        result = (a_ + b_) / 2;
+        steps += `Final approximation: ${result}\n`;
+      }
+
+      else if (method === "newton") {
+        let x = parseFloat(document.getElementById("x0_newton").value);
+        let iter = 0;
+        for (; iter < 100; iter++) {
+          let fx = F(func, x);
+          let h = 1e-5;
+          let fpx = (F(func, x + h) - F(func, x - h)) / (2 * h);
+          steps += `Iteration ${iter + 1}: x = ${x}, f(x) = ${fx}, f'(x) ≈ ${fpx}\n`;
+          if (Math.abs(fx) < tol) break;
+          x = x - fx / fpx;
+        }
+        result = x;
+        steps += `Final approximation: ${result}\n`;
+      }
+
+      else if (method === "secant") {
+        let x0 = parseFloat(document.getElementById("x0_secant").value);
+        let x1 = parseFloat(document.getElementById("x1_secant").value);
+        let iter = 0;
+        for (; iter < 100; iter++) {
+          let f0 = F(func, x0);
+          let f1 = F(func, x1);
+          steps += `Iteration ${iter + 1}: x0 = ${x0}, x1 = ${x1}, f(x0) = ${f0}, f(x1) = ${f1}\n`;
+          if (Math.abs(f1) < tol) break;
+          let xTemp = x1 - f1 * (x1 - x0) / (f1 - f0);
+          x0 = x1;
+          x1 = xTemp;
+        }
+        result = x1;
+        steps += `Final approximation: ${result}\n`;
+      }
+
+      output.textContent = steps;
+    }
+  </script>
+</body>
+</html>
